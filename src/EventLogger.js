@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Clock, Calendar, Music, Book, Briefcase, Coffee, Edit2, Check, X } from 'lucide-react';
-import AnalogClock from './AnalogClock';
+import AnalogClock from './analogClock';
 
 const EventLogger = () => {
   const [events, setEvents] = useState([]);
