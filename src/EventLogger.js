@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Clock, Calendar, Music, Book, Briefcase, Coffee, Edit2, Check, X } from 'lucide-react';
+import { Helmet } from 'react-helmet';
 import AnalogClock from './analogClock';
 
 const EventLogger = () => {
@@ -57,13 +58,13 @@ const EventLogger = () => {
   };
 
   const updateEvent = (id, updatedFields) => {
-    setEvents(events.map(event => 
-      event.id === id 
-        ? { 
-            ...event, 
-            ...updatedFields, 
-            endTime: calculateEndTime(updatedFields.startTime || event.startTime, updatedFields.duration || event.duration)
-          } 
+    setEvents(events.map(event =>
+      event.id === id
+        ? {
+          ...event,
+          ...updatedFields,
+          endTime: calculateEndTime(updatedFields.startTime || event.startTime, updatedFields.duration || event.duration)
+        }
         : event
     ));
   };
@@ -149,13 +150,16 @@ const EventLogger = () => {
 
   return (
     <div style={containerStyle}>
+      <Helmet>
+        <title>EventLogger | WW93</title>
+      </Helmet>
       <div style={contentStyle}>
-        <div style={{display: 'flex', justifyContent: 'center', marginBottom: '24px'}}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
           <AnalogClock />
         </div>
 
-        <div style={{marginBottom: '24px'}}>
-          <select 
+        <div style={{ marginBottom: '24px' }}>
+          <select
             value={eventType}
             onChange={(e) => setEventType(e.target.value)}
             style={inputStyle}
@@ -174,7 +178,7 @@ const EventLogger = () => {
             style={inputStyle}
           />
 
-          <div style={{display: 'flex', gap: '16px', marginBottom: '16px'}}>
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
             <div style={timeInputContainerStyle}>
               <input
                 type="time"
@@ -188,23 +192,23 @@ const EventLogger = () => {
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               placeholder="持续时间(分钟)"
-              style={{...inputStyle, marginBottom: 0, flex: 1}}
+              style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
             />
           </div>
 
           <button onClick={addEvent} style={buttonStyle}>
-            <PlusCircle style={{marginRight: '8px'}} />
+            <PlusCircle style={{ marginRight: '8px' }} />
             添加事件
           </button>
         </div>
 
         <div>
-          <h2 style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', color: 'white'}}>事件历史</h2>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', color: 'white' }}>事件历史</h2>
           {events.map(event => (
             <div key={event.id} style={eventCardStyle}>
-              <div style={{display: 'flex', alignItems: 'center', marginBottom: '8px'}}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                 {getEventIcon(event.type)}
-                <span style={{fontWeight: 'bold', marginLeft: '8px', flexGrow: 1}}>{event.type}</span>
+                <span style={{ fontWeight: 'bold', marginLeft: '8px', flexGrow: 1 }}>{event.type}</span>
                 {editingEventId === event.id ? (
                   <>
                     <button onClick={() => setEditingEventId(null)} style={iconButtonStyle}>
@@ -220,27 +224,27 @@ const EventLogger = () => {
                   </button>
                 )}
               </div>
-              <div style={{display: 'flex', alignItems: 'center', marginTop: '8px'}}>
-                <Clock size={16} style={{marginRight: '4px'}} />
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                <Clock size={16} style={{ marginRight: '4px' }} />
                 {editingEventId === event.id ? (
                   <input
                     type="time"
                     value={event.startTime}
                     onChange={(e) => updateEvent(event.id, { startTime: e.target.value })}
-                    style={{...inputStyle, padding: '4px', marginBottom: 0, marginRight: '8px'}}
+                    style={{ ...inputStyle, padding: '4px', marginBottom: 0, marginRight: '8px' }}
                   />
                 ) : (
                   <span>{event.startTime} - {event.endTime}</span>
                 )}
               </div>
-              <div style={{display: 'flex', alignItems: 'center'}}>
-                <Calendar size={16} style={{marginRight: '4px'}} />
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Calendar size={16} style={{ marginRight: '4px' }} />
                 {editingEventId === event.id ? (
                   <input
                     type="number"
                     value={event.duration}
                     onChange={(e) => updateEvent(event.id, { duration: e.target.value })}
-                    style={{...inputStyle, padding: '4px', marginBottom: 0, marginRight: '8px'}}
+                    style={{ ...inputStyle, padding: '4px', marginBottom: 0, marginRight: '8px' }}
                   />
                 ) : (
                   <span>{event.duration}</span>

@@ -1,3 +1,5 @@
+import { Helmet } from 'react-helmet';
+
 const Home = () => {
     const containerStyle = {
         textAlign: "center",
@@ -23,6 +25,9 @@ const Home = () => {
     };
     return (
         <div style={containerStyle}>
+            <Helmet>
+                <title>Home | WW93</title>
+            </Helmet>
             <div>
                 <h1 style={{ "fontWeight": "lighter", margin: 0, fontSize: "3em" }}>Coming Soon...</h1>
             </div>
