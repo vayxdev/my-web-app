@@ -19,10 +19,10 @@ const Home = () => {
         color: "#999",
         fontSize: "0.9em",
     };
-    const linkStyle = {
-        color: "inherit",
-        textDecoration: "none",
-    };
+    // const linkStyle = {
+    //     color: "inherit",
+    //     textDecoration: "none",
+    // };
     return (
         <div style={containerStyle}>
             <Helmet>

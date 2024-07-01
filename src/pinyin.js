@@ -14,7 +14,7 @@ const PinyinAnnotator = () => {
     console.log(textArray)
     const annotated = pinyinResult.map((item, index) => (
       <React.Fragment key={index}>
-        {textArray[index] != '\n' ? (
+        {textArray[index] !== '\n' ? (
           <span></span>
         ): (<br/>)}
         <ruby className="text-base mx-[5px]">
@@ -31,7 +31,6 @@ const PinyinAnnotator = () => {
       <Helmet>
         <title>PinyinAnnotator - 拼音注音器 | ww93‘s Tools | 工具站</title>
       </Helmet>
-      <h1 className="text-2xl font-bold mb-4"></h1>
       <textarea
         className="w-full p-2 border border-gray-300 rounded mb-4"
         rows="4"
