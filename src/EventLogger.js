@@ -151,7 +151,7 @@ const EventLogger = () => {
   return (
     <div style={containerStyle}>
       <Helmet>
-        <title>EventLogger | WW93</title>
+        <title>EventLogger - 事件记录 | ww93‘s Tools | 工具站点</title>
       </Helmet>
       <div style={contentStyle}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>

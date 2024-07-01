@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { pinyin } from 'pinyin-pro';
+import { Helmet } from 'react-helmet';
 
 // https://pinyin-pro.cn/use/pinyin.html
 const PinyinAnnotator = () => {
@@ -8,17 +9,18 @@ const PinyinAnnotator = () => {
 
   const addPinyin = () => {
     const pinyinResult = pinyin(text, { type: 'array' });
+    console.log(pinyinResult)
     const textArray = text.split('')
+    console.log(textArray)
     const annotated = pinyinResult.map((item, index) => (
       <React.Fragment key={index}>
-        {item ? (
-          <ruby className="text-base">
-            {textArray[index]}
-            <rt className="text-xs text-gray-500">{item}</rt>
-          </ruby>
-        ) : (
-          'error'
-        )}
+        {textArray[index] != '\n' ? (
+          <span></span>
+        ): (<br/>)}
+        <ruby className="text-base mx-[5px]">
+          {textArray[index]}
+          <rt className="text-xs text-gray-500">{item}</rt>
+        </ruby>
       </React.Fragment>
     ));
     setAnnotatedText(annotated);
@@ -26,7 +28,10 @@ const PinyinAnnotator = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">拼音注音器</h1>
+      <Helmet>
+        <title>PinyinAnnotator - 拼音注音器 | ww93‘s Tools | 工具站</title>
+      </Helmet>
+      <h1 className="text-2xl font-bold mb-4"></h1>
       <textarea
         className="w-full p-2 border border-gray-300 rounded mb-4"
         rows="4"

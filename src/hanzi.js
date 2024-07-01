@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import HanziWriter from 'hanzi-writer';
+import { Helmet } from 'react-helmet';
 
 const Hanzi = () => {
   const [input, setInput] = useState('');
@@ -119,6 +120,9 @@ const Hanzi = () => {
 
   return (
     <div className="flex flex-col items-center p-4 space-y-4">
+      <Helmet>
+        <title>HanziWriter - 汉字笔画顺序 | ww93‘s Tools | 工具站</title>
+      </Helmet>
       <input
         type="text"
         value={input}

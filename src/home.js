@@ -29,10 +29,12 @@ const Home = () => {
                 <title>Home | WW93</title>
             </Helmet>
             <div>
-                <h1 style={{ "fontWeight": "lighter", margin: 0, fontSize: "3em" }}>Coming Soon...</h1>
+                <h1 style={{ "fontWeight": "lighter", margin: 0, fontSize: "3em" }}>
+                    {/* Coming Soon... */}
+                </h1>
             </div>
             <footer style={footerStyle}>
-                <a style={linkStyle} href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">浙ICP备2024104088号</a>
+                {/* <a style={linkStyle} href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">浙ICP备2024104088号</a> */}
             </footer>
         </div>
     );
