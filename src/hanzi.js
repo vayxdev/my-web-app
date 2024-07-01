@@ -111,6 +111,7 @@ const Hanzi = () => {
     setErrors(newErrors);
   }, [input]);
 
+  // https://hanziwriter.org/docs.html
   const handleInputChange = (e) => {
     setInput(e.target.value);
     setErrors({});

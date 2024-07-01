@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { pinyin } from 'pinyin-pro';
 
+// https://pinyin-pro.cn/use/pinyin.html
 const PinyinAnnotator = () => {
   const [text, setText] = useState('春眠不觉晓，处处闻啼鸟。\n夜来风雨声，花落知多少。');
   const [annotatedText, setAnnotatedText] = useState('');
