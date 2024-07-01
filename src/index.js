@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import './tailwind.css';
 import EventLogger from './eventLogger';
-import HanziWriterComp from './hanzi';
+import Hanzi from './hanzi';
 import Home from './home';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 
@@ -21,7 +21,7 @@ root.render(
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/event-logger" element={<EventLogger />} />
-          <Route path="/hanzi" element={<HanziWriterComp />} />
+          <Route path="/hanzi" element={<Hanzi />} />
         </Routes>
       </div>
     </Router>

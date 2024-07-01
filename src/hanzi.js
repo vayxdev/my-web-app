@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import HanziWriter from 'hanzi-writer';
 
-export default function HanziWriterDemo() {
+const Hanzi = () => {
   const [input, setInput] = useState('');
   const [errors, setErrors] = useState({});
   const dynamicWritersRef = useRef({});
@@ -68,7 +68,8 @@ export default function HanziWriterDemo() {
     }
 
     // Create or update writers for each character in the input
-    input.split('').forEach((char) => {
+    // 过滤掉非汉字的字符
+    input.split('').filter(char => /[\u4e00-\u9fa5]/.test(char)).forEach((char) => {
       if (containerRefs.current[char]) {
         const loadCharacter = async () => {
           try {
@@ -89,11 +90,13 @@ export default function HanziWriterDemo() {
 
             // Create static writers for each stroke
             if (!staticWritersRef.current[char]) {
-              for (var i = 0; i < charData.strokes.length; i++) {
-                var strokesPortion = charData.strokes.slice(0, i + 1);
-                renderFanningStrokes(containerRefs.current[char].static[i], strokesPortion);
+              staticWritersRef.current[char] = [];
+              for (let i = 0; i < charData.strokes.length; i++) {
+                let container = document.createElement('div');
+                container.className = 'w-[50px] h-[50px] border border-gray-300 rounded-md m-1';
+                containerRefs.current[char].static.appendChild(container);
+                renderFanningStrokes(container, charData.strokes.slice(0, i + 1));
               }
-
             }
           } catch (error) {
             console.error(`Error loading character data for "${char}":`, error);
@@ -123,24 +126,16 @@ export default function HanziWriterDemo() {
         className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <div className="w-full max-w-2xl">
-        {input.split('').map((char, charIndex) => (
+        {input.split('').filter(char => /[\u4e00-\u9fa5]/.test(char)).map((char, charIndex) => (
           <div key={charIndex} className="flex items-center mb-4">
             <div
-              ref={el => containerRefs.current[char] = { ...containerRefs.current[char], dynamic: el }}
+              ref={el => containerRefs.current[char] = { ...containerRefs.current[char], dynamic: el, static: el }}
               className="w-[100px] h-[100px] border-2 border-gray-300 rounded-md mr-4"
             ></div>
-            <div className="flex flex-wrap">
-              {[...Array(10)].map((_, index) => (
-                <div
-                  key={index}
-                  ref={el => {
-                    if (!containerRefs.current[char]) containerRefs.current[char] = { static: [] };
-                    if (!containerRefs.current[char].static) containerRefs.current[char].static = [];
-                    containerRefs.current[char].static[index] = el;
-                  }}
-                  className="w-[50px] h-[50px] border border-gray-300 rounded-md m-1"
-                ></div>
-              ))}
+            <div className="flex flex-wrap" ref={el => {
+              if (containerRefs.current[char]) containerRefs.current[char].static = el;
+            }}>
+              {/* 静态笔画容器会动态插入到这里 */}
             </div>
             {errors[char] && (
               <div className="text-red-500 text-sm ml-2">{errors[char]}</div>
@@ -151,3 +146,5 @@ export default function HanziWriterDemo() {
     </div>
   );
 }
+
+export default Hanzi;
