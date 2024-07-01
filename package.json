@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^13.5.0",
     "hanzi-writer": "^3.7.0",
     "lucide-react": "^0.396.0",
+    "pinyin-pro": "^3.23.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-helmet": "^6.1.0",
