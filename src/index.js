@@ -5,12 +5,17 @@ import './tailwind.css';
 import EventLogger from './eventLogger';
 import Hanzi from './hanzi';
 import PinyinAnnotator from './pinyin';
+import GoogleAnalytics from './googleAnalytics';
 import Home from './home';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <Router>
+  <div>
+    <div>
+      <GoogleAnalytics measurementId="G-BTS9Y6FD7T" />
+    </div>
+    <Router>
       <div>
         <nav className='navbar'>
           <ul className='nav-list'>
@@ -28,4 +33,5 @@ root.render(
         </Routes>
       </div>
     </Router>
+  </div>
 );
