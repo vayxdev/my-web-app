@@ -25,6 +25,25 @@ const Hanzi = () => {
     };
   }, []);
 
+  const createSvgBackground = (svg, size) => {
+    const lines = [
+      { x1: 0, y1: 0, x2: size, y2: size },
+      { x1: size, y1: 0, x2: 0, y2: size },
+      { x1: size / 2, y1: 0, x2: size / 2, y2: size },
+      { x1: 0, y1: size / 2, x2: size, y2: size / 2 }
+    ];
+
+    lines.forEach(line => {
+      const lineElement = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      lineElement.setAttribute('x1', line.x1.toString());
+      lineElement.setAttribute('y1', line.y1.toString());
+      lineElement.setAttribute('x2', line.x2.toString());
+      lineElement.setAttribute('y2', line.y2.toString());
+      lineElement.setAttribute('stroke', '#DDD');
+      svg.appendChild(lineElement);
+    });
+  };
+
   useEffect(() => {
     const newErrors = {};
 
@@ -45,28 +64,29 @@ const Hanzi = () => {
       }
     });
 
-    const renderFanningStrokes = (target, strokes) => {
-      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.style.width = '50px';
-      svg.style.height = '50px';
-      svg.style.border = '1px solid #EEE'
-      svg.style.marginRight = '3px'
+    const renderFanningStrokes = (target, strokes, size) => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', size.toString());
+      svg.setAttribute('height', size.toString());
+      svg.style.border = '1px solid #EEE';
+      svg.style.marginRight = '3px';
       target.appendChild(svg);
-      var group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
-      // set the transform property on the g element so the character renders at 75x75
-      var transformData = HanziWriter.getScalingTransform(50, 50);
+      // Add 田字格 background
+      createSvgBackground(svg, size);
+
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      const transformData = HanziWriter.getScalingTransform(size, size);
       group.setAttributeNS(null, 'transform', transformData.transform);
       svg.appendChild(group);
 
       strokes.forEach(function (strokePath) {
-        var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttributeNS(null, 'd', strokePath);
-        // style the character paths
         path.style.fill = '#555';
         group.appendChild(path);
       });
-    }
+    };
 
     // Create or update writers for each character in the input
     // 过滤掉非汉字的字符
@@ -78,7 +98,13 @@ const Hanzi = () => {
 
             // Create dynamic writer
             if (!dynamicWritersRef.current[char]) {
-              dynamicWritersRef.current[char] = HanziWriter.create(containerRefs.current[char].dynamic, char, {
+              const dynamicSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+              dynamicSvg.setAttribute('width', '100');
+              dynamicSvg.setAttribute('height', '100');
+              containerRefs.current[char].dynamic.appendChild(dynamicSvg);
+              createSvgBackground(dynamicSvg, 100);
+
+              dynamicWritersRef.current[char] = HanziWriter.create(dynamicSvg, char, {
                 width: 100,
                 height: 100,
                 padding: 5,
@@ -96,7 +122,7 @@ const Hanzi = () => {
                 let container = document.createElement('div');
                 container.className = 'w-[50px] h-[50px] border border-gray-300 rounded-md m-1';
                 containerRefs.current[char].static.appendChild(container);
-                renderFanningStrokes(container, charData.strokes.slice(0, i + 1));
+                renderFanningStrokes(container, charData.strokes.slice(0, i + 1), 50);
               }
             }
           } catch (error) {
