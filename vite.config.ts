@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     react(),
     Sitemap({
-      hostname: 'https://ww93.com',
+      hostname: 'https://tools.ww93.fun',
       outDir: 'build',
       dynamicRoutes: [
         '/',
