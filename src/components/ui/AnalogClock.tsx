@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-const AnalogClock = () => {
-  const [time, setTime] = useState(new Date());
+const AnalogClock: React.FC = () => {
+  const [time, setTime] = useState<Date>(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -32,7 +32,7 @@ const AnalogClock = () => {
     );
   });
 
-  const clockStyle = {
+  const clockStyle: React.CSSProperties = {
     position: 'relative',
     width: '220px',
     height: '220px',
@@ -45,7 +45,7 @@ const AnalogClock = () => {
     alignItems: 'center',
   };
 
-  const innerClockStyle = {
+  const innerClockStyle: React.CSSProperties = {
     position: 'relative',
     width: '200px',
     height: '200px',
@@ -53,7 +53,7 @@ const AnalogClock = () => {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   };
 
-  const timeDisplayStyle = {
+  const timeDisplayStyle: React.CSSProperties = {
     position: 'absolute',
     inset: '0',
     display: 'flex',
@@ -65,7 +65,7 @@ const AnalogClock = () => {
     textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
   };
 
-  const handStyles = {
+  const handStyles: React.CSSProperties = {
     position: 'absolute',
     bottom: '50%',
     left: '50%',
@@ -80,7 +80,7 @@ const AnalogClock = () => {
         <div style={timeDisplayStyle}>
           {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
-        <div 
+        <div
           style={{
             ...handStyles,
             width: '6px',
@@ -90,7 +90,7 @@ const AnalogClock = () => {
             transition: 'transform 0.5s cubic-bezier(0.4, 2.08, 0.55, 0.44)',
           }}
         />
-        <div 
+        <div
           style={{
             ...handStyles,
             width: '4px',
@@ -100,7 +100,7 @@ const AnalogClock = () => {
             transition: 'transform 0.5s cubic-bezier(0.4, 2.08, 0.55, 0.44)',
           }}
         />
-        <div 
+        <div
           style={{
             ...handStyles,
             width: '2px',
@@ -114,5 +114,5 @@ const AnalogClock = () => {
     </div>
   );
 };
-  
-  export default AnalogClock;
+
+export default AnalogClock;

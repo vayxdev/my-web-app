@@ -1,28 +1,37 @@
 import { useEffect } from 'react';
 
-const GoogleAnalytics = ({ measurementId }) => {
+interface GoogleAnalyticsProps {
+  measurementId: string;
+}
+
+const GoogleAnalytics: React.FC<GoogleAnalyticsProps> = ({ measurementId }) => {
   useEffect(() => {
-    // Load Google Analytics script
     const script = document.createElement('script');
     script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
     script.async = true;
     document.head.appendChild(script);
 
-    // Initialize Google Analytics
     window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      window.dataLayer.push(arguments);
+    function gtag(...args: any[]) {
+      window.dataLayer.push(args);
     }
     gtag('js', new Date());
     gtag('config', measurementId);
 
-    // Clean up
     return () => {
-      document.head.removeChild(script);
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
     };
   }, [measurementId]);
 
-  return null; // This component doesn't render anything
+  return null;
 };
+
+declare global {
+  interface Window {
+    dataLayer?: any[];
+  }
+}
 
 export default GoogleAnalytics;

@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Clock, Calendar, Music, Book, Briefcase, Coffee, Edit2, Check, X } from 'lucide-react';
 import { Helmet } from 'react-helmet';
-import AnalogClock from './analogClock';
+import AnalogClock from '../ui/AnalogClock';
 
-const EventLogger = () => {
-  const [events, setEvents] = useState([]);
-  const [eventType, setEventType] = useState('工作');
-  const [note, setNote] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [duration, setDuration] = useState('');
-  const [editingEventId, setEditingEventId] = useState(null);
+interface Event {
+  id: number;
+  type: string;
+  note: string;
+  startTime: string;
+  duration: string;
+  endTime: string;
+}
+
+const EventLogger: React.FC = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventType, setEventType] = useState<string>('工作');
+  const [note, setNote] = useState<string>('');
+  const [startTime, setStartTime] = useState<string>('');
+  const [duration, setDuration] = useState<string>('');
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
 
   useEffect(() => {
-    // Load events from localStorage when the component mounts
     const storedEvents = localStorage.getItem('events');
     if (storedEvents) {
       setEvents(JSON.parse(storedEvents));
@@ -23,13 +31,12 @@ const EventLogger = () => {
   }, []);
 
   useEffect(() => {
-    // Save events to localStorage whenever they change
     localStorage.setItem('events', JSON.stringify(events));
   }, [events]);
 
   const addEvent = () => {
     if (!eventType || !startTime || !duration) return;
-    const newEvent = {
+    const newEvent: Event = {
       id: Date.now(),
       type: eventType,
       note,
@@ -48,7 +55,7 @@ const EventLogger = () => {
     setDuration('');
   };
 
-  const calculateEndTime = (start, duration) => {
+  const calculateEndTime = (start: string, duration: string): string => {
     const [hours, minutes] = start.split(':');
     const durationMinutes = parseInt(duration);
     const endDate = new Date();
@@ -57,7 +64,7 @@ const EventLogger = () => {
     return endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const updateEvent = (id, updatedFields) => {
+  const updateEvent = (id: number, updatedFields: Partial<Event>) => {
     setEvents(events.map(event =>
       event.id === id
         ? {
@@ -69,7 +76,7 @@ const EventLogger = () => {
     ));
   };
 
-  const getEventIcon = (type) => {
+  const getEventIcon = (type: string) => {
     switch (type) {
       case '工作': return <Briefcase size={24} />;
       case '学习': return <Book size={24} />;
@@ -78,14 +85,14 @@ const EventLogger = () => {
     }
   };
 
-  const containerStyle = {
+  const containerStyle: React.CSSProperties = {
     minHeight: '100vh',
     padding: '24px',
     background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
     boxSizing: 'border-box',
   };
 
-  const contentStyle = {
+  const contentStyle: React.CSSProperties = {
     maxWidth: '800px',
     margin: '0 auto',
     background: 'rgba(255, 255, 255, 0.1)',
@@ -94,7 +101,7 @@ const EventLogger = () => {
     boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
   };
 
-  const inputStyle = {
+  const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '12px',
     border: 'none',
@@ -105,18 +112,18 @@ const EventLogger = () => {
     transition: 'all 0.3s ease',
   };
 
-  const timeInputStyle = {
+  const timeInputStyle: React.CSSProperties = {
     ...inputStyle,
     paddingRight: '5px',
     marginBottom: 0,
   };
 
-  const timeInputContainerStyle = {
+  const timeInputContainerStyle: React.CSSProperties = {
     position: 'relative',
     flex: 1,
   };
 
-  const buttonStyle = {
+  const buttonStyle: React.CSSProperties = {
     width: '100%',
     backgroundColor: '#4CAF50',
     color: 'white',
@@ -132,7 +139,7 @@ const EventLogger = () => {
     transition: 'all 0.3s ease',
   };
 
-  const eventCardStyle = {
+  const eventCardStyle: React.CSSProperties = {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     padding: '16px',
     borderRadius: '10px',
@@ -141,7 +148,7 @@ const EventLogger = () => {
     transition: 'all 0.3s ease',
   };
 
-  const iconButtonStyle = {
+  const iconButtonStyle: React.CSSProperties = {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
@@ -151,7 +158,33 @@ const EventLogger = () => {
   return (
     <div style={containerStyle}>
       <Helmet>
-        <title>EventLogger - 事件记录 | ww93‘s Tools | 工具站点</title>
+        <title>事件记录工具 - EventLogger | WW93在线工具</title>
+        <meta name="description" content="EventLogger是一款便捷的事件记录工具，帮助您记录工作、学习、娱乐等日常活动的时间与详情，支持本地存储，数据永不丢失。" />
+        <meta name="keywords" content="事件记录, 时间管理, 工作日志, 学习记录, 效率工具, 在线工具" />
+        <meta name="author" content="WW93" />
+        <meta property="og:title" content="事件记录工具 - EventLogger" />
+        <meta property="og:description" content="便捷的事件记录工具，帮助您管理日常活动时间与详情。" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ww93.com/event-logger" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="事件记录工具 - EventLogger" />
+        <meta name="twitter:description" content="便捷的事件记录工具，帮助您管理日常活动时间与详情。" />
+        <link rel="canonical" href="https://ww93.com/event-logger" />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "EventLogger",
+            "applicationCategory": "ProductivityApplication",
+            "operatingSystem": "Web Browser",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "便捷的事件记录工具，帮助您记录工作、学习、娱乐等日常活动"
+          })}
+        </script>
       </Helmet>
       <div style={contentStyle}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
