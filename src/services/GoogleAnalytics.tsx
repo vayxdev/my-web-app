@@ -13,7 +13,7 @@ const GoogleAnalytics: React.FC<GoogleAnalyticsProps> = ({ measurementId }) => {
 
     window.dataLayer = window.dataLayer || [];
     function gtag(...args: any[]) {
-      window.dataLayer.push(args);
+      window.dataLayer?.push(args);
     }
     gtag('js', new Date());
     gtag('config', measurementId);

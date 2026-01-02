@@ -210,10 +210,10 @@ const Hanzi: React.FC = () => {
                       onComplete(charData);
                     });
                 },
-                onLoadCharDataSuccess: (data: any) => {
+                onLoadCharDataSuccess: () => {
                   console.log('Success!');
                 },
-                onLoadCharDataError: (reason: any) => {
+                onLoadCharDataError: () => {
                   console.log('Oh No! Something went wrong :(');
                 },
               });

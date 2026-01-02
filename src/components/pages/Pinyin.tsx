@@ -57,7 +57,7 @@ const PinyinAnnotator: React.FC = () => {
       </Helmet>
       <textarea
         className="w-full p-2 border border-gray-300 rounded mb-4"
-        rows="4"
+        rows={4}
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
