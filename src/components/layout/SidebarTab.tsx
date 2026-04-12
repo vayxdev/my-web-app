@@ -13,18 +13,44 @@ interface SidebarTabProps {
 const SidebarTab: React.FC<SidebarTabProps> = ({ label, icon: Icon, isActive, showLabel = true, onClick }) => {
   return (
     <button
-      className={`w-full flex items-center border-none rounded-lg mb-1 cursor-pointer transition-all duration-200 ${
-        showLabel ? 'justify-start px-5' : 'justify-center px-2'
-      } py-3 ${isActive
-        ? 'bg-green-50 font-semibold hover:bg-green-100'
-        : 'bg-transparent font-normal hover:bg-gray-100'
-      }`}
+      style={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: showLabel ? '10px' : '0',
+        justifyContent: showLabel ? 'flex-start' : 'center',
+        padding: showLabel ? '10px 16px' : '10px 8px',
+        background: isActive ? 'rgba(196, 148, 66, 0.1)' : 'transparent',
+        border: 'none',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        marginBottom: '2px',
+        transition: 'all 0.2s ease',
+      }}
       onClick={onClick}
+      onMouseEnter={(e) => {
+        if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) e.currentTarget.style.background = 'transparent';
+      }}
       aria-label={`Navigate to ${label}`}
       aria-current={isActive ? 'page' : undefined}
     >
-      <Icon size={18} color={isActive ? '#2e7d32' : '#666'} />
-      {showLabel && <span className="ml-2.5">{label}</span>}
+      <Icon size={16} color={isActive ? '#c49442' : '#7a756e'} />
+      {showLabel && (
+        <span
+          style={{
+            fontFamily: "'Noto Serif SC', serif",
+            fontSize: '13px',
+            fontWeight: isActive ? 600 : 400,
+            color: isActive ? '#c49442' : '#9c958b',
+            letterSpacing: '0.5px',
+          }}
+        >
+          {label}
+        </span>
+      )}
     </button>
   );
 };

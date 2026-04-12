@@ -13,6 +13,7 @@
     "hanzi-writer": "^3.7.0",
     "hanzi-writer-data": "^2.0.1",
     "html-to-image": "^1.11.13",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.396.0",
     "pinyin-pro": "^3.23.0",
     "react": "^18.3.1",

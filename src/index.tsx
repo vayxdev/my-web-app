@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import './styles/index.css';
 import './styles/tailwind.css';
 import Home from './components/pages/Home';
-import EventLogger from './components/pages/EventLogger';
 import Hanzi from './components/pages/Hanzi';
 import PinyinAnnotator from './components/pages/Pinyin';
 import Md2Image from './components/pages/Md2Image';
@@ -39,7 +38,6 @@ const AppContent: React.FC = () => {
       <div style={pageContentStyle}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/event-logger" element={<EventLogger />} />
           <Route path="/hanzi" element={<Hanzi />} />
           <Route path="/pinyin" element={<PinyinAnnotator />} />
           <Route path="/md2image" element={<Md2Image />} />
