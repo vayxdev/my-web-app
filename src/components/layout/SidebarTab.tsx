@@ -6,47 +6,33 @@ interface SidebarTabProps {
   path: string;
   icon: LucideIcon;
   isActive: boolean;
-  showLabel?: boolean;
+  collapsed?: boolean;
   onClick: () => void;
 }
 
-const SidebarTab: React.FC<SidebarTabProps> = ({ label, icon: Icon, isActive, showLabel = true, onClick }) => {
+const SidebarTab: React.FC<SidebarTabProps> = ({ label, icon: Icon, isActive, collapsed = false, onClick }) => {
   return (
     <button
-      style={{
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        gap: showLabel ? '10px' : '0',
-        justifyContent: showLabel ? 'flex-start' : 'center',
-        padding: showLabel ? '10px 16px' : '10px 8px',
-        background: isActive ? 'rgba(196, 148, 66, 0.1)' : 'transparent',
-        border: 'none',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        marginBottom: '2px',
-        transition: 'all 0.2s ease',
-      }}
+      type="button"
       onClick={onClick}
-      onMouseEnter={(e) => {
-        if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-      }}
-      onMouseLeave={(e) => {
-        if (!isActive) e.currentTarget.style.background = 'transparent';
-      }}
-      aria-label={`Navigate to ${label}`}
       aria-current={isActive ? 'page' : undefined}
+      aria-label={label}
+      title={collapsed ? label : undefined}
+      className={`group relative w-full flex items-center ${
+        collapsed ? 'justify-center px-0' : 'gap-3 px-3 justify-start'
+      } py-2 rounded-md transition-colors ${
+        isActive ? 'bg-accent-soft/40 text-accent' : 'text-muted hover:text-text hover:bg-surface'
+      }`}
     >
-      <Icon size={16} color={isActive ? '#c49442' : '#7a756e'} />
-      {showLabel && (
+      <Icon size={16} strokeWidth={1.8} />
+      {!collapsed && (
+        <span className={`text-sm ${isActive ? 'font-medium' : ''}`}>{label}</span>
+      )}
+
+      {collapsed && (
         <span
-          style={{
-            fontFamily: "'Noto Serif SC', serif",
-            fontSize: '13px',
-            fontWeight: isActive ? 600 : 400,
-            color: isActive ? '#c49442' : '#9c958b',
-            letterSpacing: '0.5px',
-          }}
+          className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-md bg-text text-bg text-xs px-2 py-1 opacity-0 -translate-x-1 transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0 z-50 shadow-soft"
+          role="tooltip"
         >
           {label}
         </span>

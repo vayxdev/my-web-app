@@ -1,21 +1,32 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import Sitemap from 'vite-plugin-sitemap'
+import { site } from './src/config/site'
 
 export default defineConfig({
   plugins: [
     react(),
     Sitemap({
-      hostname: 'https://tools.ww93.fun',
+      hostname: site.url,
       outDir: 'build',
       dynamicRoutes: [
         '/',
-        '/event-logger',
         '/hanzi',
         '/pinyin',
-        '/md2image',
+        '/markdown',
       ],
     }),
+    {
+      name: 'inject-site-config',
+      transformIndexHtml(html) {
+        return html
+          .replace(/%SITE_NAME%/g, site.name)
+          .replace(/%SITE_DESC%/g, site.description)
+          .replace(/%SITE_AUTHOR%/g, site.author)
+          .replace(/%SITE_KEYWORDS%/g, site.keywords)
+          .replace(/%SITE_TITLE%/g, `${site.name} — ${site.tagline}`);
+      },
+    },
   ],
   build: {
     outDir: 'build',

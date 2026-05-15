@@ -1,55 +1,35 @@
 import React, { useState, useMemo } from 'react';
 import { pinyin } from 'pinyin-pro';
 import { Helmet } from 'react-helmet';
+import { Copy, Check, RotateCcw } from 'lucide-react';
+import { site } from '../../config/site';
+
+const DEFAULT_TEXT = '春眠不觉晓，处处闻啼鸟。\n夜来风雨声，花落知多少。';
 
 const PinyinAnnotator: React.FC = () => {
-  const [text, setText] = useState<string>('春眠不觉晓，处处闻啼鸟。\n夜来风雨声，花落知多少。');
+  const [text, setText] = useState<string>(DEFAULT_TEXT);
+  const [copied, setCopied] = useState(false);
 
   const annotatedLines = useMemo(() => {
     if (!text.trim()) return null;
     const lines = text.split('\n');
     return lines.map((line, lineIndex) => {
-      if (!line) return <div key={lineIndex} style={{ height: '48px' }} />;
+      if (!line) return <div key={lineIndex} className="h-8" />;
       const pinyinResult = pinyin(line, { type: 'array' });
       const chars = line.split('');
       return (
-        <div key={lineIndex} style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '8px' }}>
+        <div key={lineIndex} className="flex flex-wrap items-end mb-3">
           {chars.map((char, charIndex) => {
-            const isChinese = /[\u4e00-\u9fa5]/.test(char);
+            const isChinese = /[一-龥]/.test(char);
             return (
               <span
                 key={charIndex}
-                style={{
-                  display: 'inline-flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  minWidth: isChinese ? '28px' : undefined,
-                  margin: '0 1px',
-                }}
+                className={`inline-flex flex-col items-center mx-0.5 ${isChinese ? 'min-w-[28px]' : ''}`}
               >
-                <span
-                  style={{
-                    fontFamily: "'Cormorant Garamond', serif",
-                    fontSize: '18px',
-                    fontWeight: 400,
-                    color: '#4a8c6f',
-                    height: '24px',
-                    lineHeight: '24px',
-                    letterSpacing: '0.3px',
-                  }}
-                >
-                  {isChinese ? pinyinResult[charIndex] : '\u00A0'}
+                <span className="font-mono text-[11px] leading-5 text-muted">
+                  {isChinese ? pinyinResult[charIndex] : ' '}
                 </span>
-                <span
-                  style={{
-                    fontFamily: "'Noto Serif SC', serif",
-                    fontSize: '17px',
-                    lineHeight: '1.6',
-                    color: '#2a2520',
-                  }}
-                >
-                  {char}
-                </span>
+                <span className="text-base leading-7 text-text">{char}</span>
               </span>
             );
           })}
@@ -58,231 +38,92 @@ const PinyinAnnotator: React.FC = () => {
     });
   }, [text]);
 
+  const copyPlainText = async () => {
+    const lines = text.split('\n');
+    const out = lines
+      .map((line) => {
+        if (!line) return '';
+        const pinyinResult = pinyin(line, { type: 'array' });
+        return line
+          .split('')
+          .map((c, i) => (/[一-龥]/.test(c) ? `${c}(${pinyinResult[i]})` : c))
+          .join('');
+      })
+      .join('\n');
+    try {
+      await navigator.clipboard.writeText(out);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {}
+  };
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(160deg, #f0ebe0 0%, #e8e3d8 50%, #eae5da 100%)',
-        position: 'relative',
-      }}
-    >
+    <div className="min-h-screen">
       <Helmet>
-        <title>拼音注音器 - PinyinAnnotator | WW93在线工具</title>
-        <meta name="description" content="PinyinAnnotator拼音注音器，快速为中文文本添加拼音标注，支持多行文本处理，是学习中文发音和阅读的得力助手。" />
+        <title>{`拼音注音器 | ${site.name}`}</title>
+        <meta name="description" content="PinyinAnnotator 拼音注音器，快速为中文文本添加拼音标注，支持多行文本处理。" />
         <meta name="keywords" content="拼音注音, 拼音标注, 中文拼音, 拼音学习, 拼音转换, 在线工具" />
-        <meta name="author" content="WW93" />
-        <meta property="og:title" content="拼音注音器 - PinyinAnnotator" />
-        <meta property="og:description" content="快速为中文文本添加拼音标注，支持多行文本处理。" />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ww93.com/pinyin" />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="拼音注音器 - PinyinAnnotator" />
-        <meta name="twitter:description" content="快速为中文文本添加拼音标注，支持多行文本处理。" />
-        <link rel="canonical" href="https://ww93.com/pinyin" />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            "name": "PinyinAnnotator",
-            "applicationCategory": "EducationalApplication",
-            "operatingSystem": "Web Browser",
-            "educationalUse": "Learning",
-            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-            "description": "中文文本拼音注音工具，支持多行文本处理"
-          })}
-        </script>
+        <meta name="author" content={site.author} />
+        <link rel="canonical" href={`${site.url}/pinyin`} />
       </Helmet>
 
-      <div
-        style={{
-          maxWidth: '960px',
-          margin: '0 auto',
-          padding: '80px 24px 60px',
-        }}
-      >
+      <div className="mx-auto max-w-5xl px-6 md:px-10 py-10 md:py-14">
         {/* Header */}
-        <div
-          style={{
-            textAlign: 'center',
-            marginBottom: '48px',
-            animation: 'fadeIn 0.6s ease-out',
-          }}
-        >
-          <h1
-            style={{
-              fontFamily: "'Noto Serif SC', serif",
-              fontSize: '28px',
-              fontWeight: 700,
-              color: '#2a2520',
-              margin: '0 0 6px',
-              letterSpacing: '4px',
-            }}
-          >
+        <header className="mb-8 animate-fade-in">
+          <div className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted mb-3">
+            Pinyin Annotator
+          </div>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-text">
             拼音注音
           </h1>
-          <span
-            style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: '13px',
-              color: '#9c958b',
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
-            }}
-          >
-            Pinyin Annotator
-          </span>
-        </div>
+          <p className="mt-2 text-sm text-muted">为中文文本添加拼音，自动实时转换。</p>
+        </header>
 
         {/* Two-column layout */}
-        <div
-          className="pinyin-layout"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '24px',
-            animation: 'fadeInUp 0.6s ease-out 0.15s both',
-          }}
-        >
-          {/* Input Panel */}
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.65)',
-              borderRadius: '16px',
-              border: '1px solid rgba(221, 212, 200, 0.5)',
-              padding: '28px',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '20px',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: '#9c958b' }}>
-                <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span
-                style={{
-                  fontFamily: "'Cormorant Garamond', serif",
-                  fontSize: '12px',
-                  color: '#9c958b',
-                  letterSpacing: '2px',
-                  textTransform: 'uppercase',
-                }}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Input */}
+          <div className="rounded-xl border border-border bg-elevated overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+              <span className="text-xs font-medium text-muted">原文</span>
+              <button
+                onClick={() => setText(DEFAULT_TEXT)}
+                className="inline-flex items-center gap-1 text-xs text-muted hover:text-text transition-colors"
+                title="恢复范例"
               >
-                Input
-              </span>
+                <RotateCcw size={12} strokeWidth={1.8} />
+                范例
+              </button>
             </div>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="输入中文文本..."
-              style={{
-                flex: 1,
-                minHeight: '280px',
-                fontFamily: "'Noto Serif SC', serif",
-                fontSize: '17px',
-                lineHeight: 2.4,
-                color: '#2a2520',
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                resize: 'none',
-                padding: 0,
-              }}
+              className="flex-1 w-full min-h-[280px] px-4 py-3.5 bg-transparent text-text leading-relaxed resize-none focus:outline-none"
             />
           </div>
 
-          {/* Output Panel */}
-          <div
-            style={{
-              background: 'rgba(250, 247, 240, 0.8)',
-              borderRadius: '16px',
-              border: '1px solid rgba(221, 212, 200, 0.5)',
-              padding: '28px',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '20px',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: '#4a8c6f' }}>
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span
-                style={{
-                  fontFamily: "'Cormorant Garamond', serif",
-                  fontSize: '12px',
-                  color: '#4a8c6f',
-                  letterSpacing: '2px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Annotated
-              </span>
-            </div>
-            <div
-              style={{
-                flex: 1,
-                minHeight: '280px',
-                lineHeight: 1,
-              }}
-            >
-              {annotatedLines ? (
-                annotatedLines
-              ) : (
-                <p
-                  style={{
-                    fontFamily: "'Noto Serif SC', serif",
-                    fontSize: '14px',
-                    color: '#b0a99e',
-                    fontStyle: 'italic',
-                  }}
+          {/* Output */}
+          <div className="rounded-xl border border-border bg-elevated overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+              <span className="text-xs font-medium text-muted">注音</span>
+              {annotatedLines && (
+                <button
+                  onClick={copyPlainText}
+                  className="inline-flex items-center gap-1 text-xs text-muted hover:text-text transition-colors"
                 >
-                  在左侧输入文本，拼音将自动生成
-                </p>
+                  {copied ? <Check size={12} strokeWidth={2} className="text-success" /> : <Copy size={12} strokeWidth={1.8} />}
+                  {copied ? '已复制' : '复制纯文本'}
+                </button>
+              )}
+            </div>
+            <div className="flex-1 min-h-[280px] px-4 py-3.5">
+              {annotatedLines ?? (
+                <p className="text-sm text-subtle">在左侧输入文本，拼音将自动生成。</p>
               )}
             </div>
           </div>
         </div>
-
-        {/* Hint */}
-        <div
-          style={{
-            textAlign: 'center',
-            marginTop: '32px',
-            animation: 'fadeIn 0.6s ease-out 0.4s both',
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "'Noto Serif SC', serif",
-              fontSize: '12px',
-              color: '#b0a99e',
-            }}
-          >
-            实时转换 · 输入即生成拼音注音
-          </p>
-        </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .pinyin-layout {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };

@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import HanziWriter from 'hanzi-writer';
 import { Helmet } from 'react-helmet';
-
-declare global {
-  interface Window {
-    HanziWriter: any;
-  }
-}
+import { Search } from 'lucide-react';
+import { site } from '../../config/site';
 
 const CACHE_PREFIX = 'hanzi_cache_';
 const CACHE_VERSION = 'v1';
@@ -25,12 +21,6 @@ const getCachedCharacterData = (char: string): any | null => {
     console.error('Error reading from cache:', error);
   }
   return null;
-};
-
-const autoCleanCache = () => {
-  if (Math.random() < 0.1) {
-    cleanExpiredCache();
-  }
 };
 
 const setCachedCharacterData = (char: string, characterData: any) => {
@@ -72,9 +62,7 @@ const checkStorageAndEvict = () => {
     const cacheKeys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.startsWith(CACHE_PREFIX + CACHE_VERSION + '_')) {
-        cacheKeys.push(key);
-      }
+      if (key && key.startsWith(CACHE_PREFIX + CACHE_VERSION + '_')) cacheKeys.push(key);
     }
     if (cacheKeys.length > MAX_CACHE_SIZE) {
       const sortedKeys = cacheKeys.sort((a, b) => {
@@ -90,25 +78,12 @@ const checkStorageAndEvict = () => {
   }
 };
 
-/* ---- Tian Zi Ge (田字格) SVG Guide Lines ---- */
-const TianZiGeBackground: React.FC<{ size: number; strokeColor?: string }> = ({
-  size,
-  strokeColor = '#c84040',
-}) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox={`0 0 ${size} ${size}`}
-    style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
-  >
-    {/* Dashed cross */}
-    <line x1={size / 2} y1={0} x2={size / 2} y2={size} stroke={strokeColor} strokeWidth="0.8" strokeDasharray="4 3" opacity="0.35" />
-    <line x1={0} y1={size / 2} x2={size} y2={size / 2} stroke={strokeColor} strokeWidth="0.8" strokeDasharray="4 3" opacity="0.35" />
-    {/* Dashed diagonals */}
-    <line x1={0} y1={0} x2={size} y2={size} stroke={strokeColor} strokeWidth="0.6" strokeDasharray="4 4" opacity="0.18" />
-    <line x1={size} y1={0} x2={0} y2={size} stroke={strokeColor} strokeWidth="0.6" strokeDasharray="4 4" opacity="0.18" />
-  </svg>
-);
+const readCssVar = (name: string, fallback: string) => {
+  if (typeof window === 'undefined') return fallback;
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  if (!v) return fallback;
+  return `rgb(${v})`;
+};
 
 const Hanzi: React.FC = () => {
   const [input, setInput] = useState<string>('');
@@ -119,10 +94,10 @@ const Hanzi: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      Object.values(dynamicWritersRef.current).forEach(writer => {
+      Object.values(dynamicWritersRef.current).forEach((writer) => {
         if (writer) writer.target.innerHTML = '';
       });
-      Object.values(staticWritersRef.current).forEach(writers => {
+      Object.values(staticWritersRef.current).forEach((writers) => {
         writers.forEach((writer: any) => {
           if (writer) writer.target.innerHTML = '';
         });
@@ -132,42 +107,42 @@ const Hanzi: React.FC = () => {
     };
   }, []);
 
-  const createSvgBackground = (svg: SVGSVGElement, size: number) => {
-    const lines = [
-      { x1: 0, y1: 0, x2: size, y2: size },
-      { x1: size, y1: 0, x2: 0, y2: size },
-      { x1: size / 2, y1: 0, x2: size / 2, y2: size },
-      { x1: 0, y1: size / 2, x2: size, y2: size / 2 },
-    ];
-    lines.forEach(line => {
-      const el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      el.setAttribute('x1', line.x1.toString());
-      el.setAttribute('y1', line.y1.toString());
-      el.setAttribute('x2', line.x2.toString());
-      el.setAttribute('y2', line.y2.toString());
-      el.setAttribute('stroke', '#c8a07a');
-      el.setAttribute('stroke-dasharray', '3 3');
-      el.setAttribute('opacity', '0.3');
-      svg.appendChild(el);
-    });
-  };
-
   useEffect(() => {
-    const newErrors: Record<string, string> = {};
+    const inkColor = readCssVar('--text', '17 24 39');
+    const accentColor = readCssVar('--accent', '37 99 235');
+    const guideColor = readCssVar('--border', '229 231 235');
 
-    Object.keys(dynamicWritersRef.current).forEach(char => {
+    const createSvgBackground = (svg: SVGSVGElement, size: number) => {
+      const lines = [
+        { x1: 0, y1: 0, x2: size, y2: size },
+        { x1: size, y1: 0, x2: 0, y2: size },
+        { x1: size / 2, y1: 0, x2: size / 2, y2: size },
+        { x1: 0, y1: size / 2, x2: size, y2: size / 2 },
+      ];
+      lines.forEach((line) => {
+        const el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        el.setAttribute('x1', line.x1.toString());
+        el.setAttribute('y1', line.y1.toString());
+        el.setAttribute('x2', line.x2.toString());
+        el.setAttribute('y2', line.y2.toString());
+        el.setAttribute('stroke', guideColor);
+        el.setAttribute('stroke-dasharray', '3 3');
+        el.setAttribute('stroke-width', '1');
+        svg.appendChild(el);
+      });
+    };
+
+    Object.keys(dynamicWritersRef.current).forEach((char) => {
       if (!input.includes(char)) {
         if (dynamicWritersRef.current[char]) {
           dynamicWritersRef.current[char].target.innerHTML = '';
           delete dynamicWritersRef.current[char];
         }
         if (staticWritersRef.current[char]) {
-          staticWritersRef.current[char].forEach((writer: any) => writer.target.innerHTML = '');
+          staticWritersRef.current[char].forEach((writer: any) => (writer.target.innerHTML = ''));
           delete staticWritersRef.current[char];
         }
-        if (containerRefs.current[char]) {
-          delete containerRefs.current[char];
-        }
+        if (containerRefs.current[char]) delete containerRefs.current[char];
       }
     });
 
@@ -177,94 +152,91 @@ const Hanzi: React.FC = () => {
       svg.setAttribute('height', size.toString());
       svg.style.display = 'block';
       target.appendChild(svg);
-
       createSvgBackground(svg, size);
-
       const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       const transformData = HanziWriter.getScalingTransform(size, size);
       group.setAttributeNS(null, 'transform', transformData.transform);
       svg.appendChild(group);
-
-      strokes.forEach((strokePath: string) => {
+      strokes.forEach((strokePath: string, idx: number) => {
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttributeNS(null, 'd', strokePath);
-        path.style.fill = '#2a2520';
+        const isLast = idx === strokes.length - 1;
+        path.style.fill = isLast ? accentColor : inkColor;
+        path.style.opacity = isLast ? '1' : '0.78';
         group.appendChild(path);
       });
     };
 
-    input.split('').filter(char => /[\u4e00-\u9fa5]/.test(char)).forEach((char) => {
-      if (containerRefs.current[char]) {
-        const loadCharacter = async () => {
-          try {
-            autoCleanCache();
-            let charData = getCachedCharacterData(char);
-            if (!charData) {
-              const response = await fetch(`https://static.ww93.fun/hanzi-writer-data/${encodeURIComponent(char)}.json`);
-              if (!response.ok) throw new Error('Character not found');
-              charData = await response.json();
-              setCachedCharacterData(char, charData);
-            }
-
-            if (!dynamicWritersRef.current[char]) {
-              dynamicWritersRef.current[char] = HanziWriter.create(containerRefs.current[char]?.dynamic as HTMLElement, char, {
-                width: 160,
-                height: 160,
-                padding: 8,
-                showOutline: true,
-                strokeAnimationSpeed: 1,
-                delayBetweenStrokes: 500,
-                strokeColor: '#2a2520',
-                outlineColor: '#ddd4c8',
-                drawingColor: '#c84040',
-                charDataLoader: (char: string, onComplete: (data: any) => void) => {
-                  fetch(`https://static.ww93.fun/hanzi-writer-data/${encodeURIComponent(char)}.json`)
-                    .then(r => r.json())
-                    .then(onComplete);
-                },
-                onLoadCharDataSuccess: () => {},
-                onLoadCharDataError: () => {},
-              });
-              dynamicWritersRef.current[char].loopCharacterAnimation();
-            }
-
-            if (!staticWritersRef.current[char]) {
-              staticWritersRef.current[char] = [];
-              for (let i = 0; i < charData.strokes.length; i++) {
-                const wrapper = document.createElement('div');
-                wrapper.style.cssText = `
-                  position: relative;
-                  width: 56px; height: 56px;
-                  background: #faf6ee;
-                  border: 1px solid #ddd4c8;
-                  border-radius: 6px;
-                  overflow: hidden;
-                  flex-shrink: 0;
-                `;
-                // Step number badge
-                const badge = document.createElement('span');
-                badge.textContent = String(i + 1);
-                badge.style.cssText = `
-                  position: absolute; top: 2px; left: 4px; z-index: 2;
-                  font-size: 9px; font-weight: 600;
-                  color: #c84040; opacity: 0.7;
-                  font-family: 'Cormorant Garamond', serif;
-                `;
-                wrapper.appendChild(badge);
-                containerRefs.current[char]?.static?.appendChild(wrapper);
-                renderFanningStrokes(wrapper, charData.strokes.slice(0, i + 1), 56);
+    input
+      .split('')
+      .filter((char) => /[一-龥]/.test(char))
+      .forEach((char) => {
+        if (containerRefs.current[char]) {
+          const loadCharacter = async () => {
+            try {
+              let charData = getCachedCharacterData(char);
+              if (!charData) {
+                const response = await fetch(
+                  `${site.hanziDataBase}/${encodeURIComponent(char)}.json`
+                );
+                if (!response.ok) throw new Error('Character not found');
+                charData = await response.json();
+                setCachedCharacterData(char, charData);
               }
-            }
-          } catch (error) {
-            console.error(`Error loading character data for "${char}":`, error);
-            newErrors[char] = `无法加载字符「${char}」的数据`;
-          }
-        };
-        loadCharacter();
-      }
-    });
 
-    setErrors(newErrors);
+              if (!dynamicWritersRef.current[char]) {
+                dynamicWritersRef.current[char] = HanziWriter.create(
+                  containerRefs.current[char]?.dynamic as HTMLElement,
+                  char,
+                  {
+                    width: 160,
+                    height: 160,
+                    padding: 8,
+                    showOutline: true,
+                    strokeAnimationSpeed: 1,
+                    delayBetweenStrokes: 500,
+                    strokeColor: inkColor,
+                    outlineColor: guideColor,
+                    drawingColor: accentColor,
+                    charDataLoader: (c: string, onComplete: (data: any) => void) => {
+                      fetch(`${site.hanziDataBase}/${encodeURIComponent(c)}.json`)
+                        .then((r) => r.json())
+                        .then(onComplete);
+                    },
+                    onLoadCharDataSuccess: () => {},
+                    onLoadCharDataError: () => {},
+                  }
+                );
+                dynamicWritersRef.current[char].loopCharacterAnimation();
+              }
+
+              if (!staticWritersRef.current[char]) {
+                staticWritersRef.current[char] = [];
+                const staticContainer = containerRefs.current[char]?.static;
+                if (staticContainer) {
+                  staticContainer.innerHTML = '';
+                  for (let i = 0; i < charData.strokes.length; i++) {
+                    const cell = document.createElement('div');
+                    cell.className =
+                      'relative w-14 h-14 rounded-md border border-border bg-surface overflow-hidden';
+                    const badge = document.createElement('span');
+                    badge.textContent = String(i + 1);
+                    badge.className =
+                      'absolute top-0.5 left-1 text-[9px] font-mono text-subtle';
+                    cell.appendChild(badge);
+                    staticContainer.appendChild(cell);
+                    renderFanningStrokes(cell, charData.strokes.slice(0, i + 1), 56);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error(`Error loading character data for "${char}":`, error);
+              setErrors((prev) => ({ ...prev, [char]: `无法加载字符「${char}」` }));
+            }
+          };
+          loadCharacter();
+        }
+      });
   }, [input]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -272,271 +244,127 @@ const Hanzi: React.FC = () => {
     setErrors({});
   };
 
-  const chars = input.split('').filter(char => /[\u4e00-\u9fa5]/.test(char));
+  const chars = input.split('').filter((c) => /[一-龥]/.test(c));
 
   return (
-    <div
-      className="paper-texture"
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(180deg, #f7f3ea 0%, #f0ebe0 100%)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
+    <div className="min-h-screen">
       <Helmet>
-        <title>汉字笔画顺序查询 - HanziWriter | WW93在线工具</title>
-        <meta name="description" content="HanziWriter汉字笔画顺序工具，支持动态演示汉字书写过程，展示每个笔画的先后顺序，帮助学习汉字的正确写法。" />
+        <title>{`汉字笔画顺序查询 | ${site.name}`}</title>
+        <meta name="description" content="HanziWriter 汉字笔画顺序工具，动态演示书写过程，逐笔展示笔画顺序。" />
         <meta name="keywords" content="汉字笔画, 笔画顺序, 汉字学习, 中文学习, 汉字书写, 在线工具" />
-        <meta name="author" content="WW93" />
-        <meta property="og:title" content="汉字笔画顺序查询 - HanziWriter" />
-        <meta property="og:description" content="支持动态演示汉字书写过程，展示每个笔画的先后顺序，帮助学习汉字的正确写法。" />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ww93.com/hanzi" />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="汉字笔画顺序查询 - HanziWriter" />
-        <meta name="twitter:description" content="支持动态演示汉字书写过程，展示每个笔画的先后顺序。" />
-        <link rel="canonical" href="https://ww93.com/hanzi" />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "EducationalApplication",
-            "name": "HanziWriter",
-            "applicationCategory": "EducationalApplication",
-            "educationalLevel": "All",
-            "educationalUse": "Learning",
-            "learningResourceType": "InteractiveTool",
-            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-            "description": "汉字笔画顺序学习工具，支持动态演示汉字书写过程"
-          })}
-        </script>
+        <meta name="author" content={site.author} />
+        <link rel="canonical" href={`${site.url}/hanzi`} />
       </Helmet>
 
-      <div
-        style={{
-          maxWidth: '740px',
-          margin: '0 auto',
-          padding: '80px 24px 60px',
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
+      <div className="mx-auto max-w-3xl px-6 md:px-10 py-10 md:py-14">
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '48px', animation: 'fadeIn 0.6s ease-out' }}>
-          <h1
-            style={{
-              fontFamily: "'Noto Serif SC', serif",
-              fontSize: '28px',
-              fontWeight: 700,
-              color: '#2a2520',
-              margin: '0 0 6px',
-              letterSpacing: '4px',
-            }}
-          >
+        <header className="mb-8 animate-fade-in">
+          <div className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted mb-3">
+            Stroke Order
+          </div>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-text">
             汉字笔画
           </h1>
-          <span
-            style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: '13px',
-              color: '#9c958b',
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
-            }}
-          >
-            Stroke Order
-          </span>
-        </div>
+          <p className="mt-2 text-sm text-muted">输入汉字，查看笔画顺序与书写动画。</p>
+        </header>
 
         {/* Search Input */}
-        <div
-          style={{
-            maxWidth: '400px',
-            margin: '0 auto 52px',
-            animation: 'fadeInUp 0.6s ease-out 0.1s both',
-          }}
-        >
-          <div style={{ position: 'relative' }}>
-            <svg
-              width="18" height="18" viewBox="0 0 24 24" fill="none"
-              style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: '#b0a99e' }}
-            >
-              <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <input
-              type="text"
-              value={input}
-              onChange={handleInputChange}
-              placeholder="输入汉字查看笔画顺序…"
-              style={{
-                width: '100%',
-                padding: '14px 20px 14px 48px',
-                fontFamily: "'Noto Serif SC', serif",
-                fontSize: '15px',
-                color: '#2a2520',
-                background: 'rgba(255,255,255,0.7)',
-                border: '1px solid #ddd4c8',
-                borderRadius: '40px',
-                outline: 'none',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#c8a07a';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.95)';
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = '#ddd4c8';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.7)';
-                e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)';
-              }}
-            />
-          </div>
+        <div className="relative mb-8 animate-fade-in" style={{ animationDelay: '60ms' }}>
+          <Search
+            size={16}
+            strokeWidth={1.8}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle"
+          />
+          <input
+            type="text"
+            value={input}
+            onChange={handleInputChange}
+            placeholder="输入汉字，如：永和"
+            className="w-full rounded-lg border border-border bg-elevated pl-10 pr-4 py-3 text-text placeholder:text-subtle focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
+          />
+          {chars.length > 0 && (
+            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-[11px] text-subtle">
+              {chars.length} 字
+            </span>
+          )}
         </div>
 
-        {/* Character Display */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-          {chars.map((char, charIndex) => (
-            <div
-              key={charIndex}
-              style={{
-                background: 'rgba(255,255,255,0.5)',
-                borderRadius: '16px',
-                padding: '32px',
-                border: '1px solid rgba(221,212,200,0.6)',
-                animation: `fadeInUp 0.5s ease-out ${0.1 * charIndex}s both`,
-              }}
+        {/* Empty state */}
+        {chars.length === 0 && (
+          <div className="rounded-xl border border-dashed border-border bg-surface/40 px-6 py-16 text-center animate-fade-in">
+            <div className="text-5xl font-medium text-subtle mb-3 select-none">永</div>
+            <p className="text-sm text-muted">输入任意汉字开始</p>
+          </div>
+        )}
+
+        {/* Character cards */}
+        <div className="space-y-4">
+          {chars.map((char, idx) => (
+            <article
+              key={`${char}-${idx}`}
+              className="rounded-xl border border-border bg-elevated p-5 md:p-6 animate-fade-in"
+              style={{ animationDelay: `${idx * 50}ms` }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '28px',
-                  flexWrap: 'wrap',
-                }}
-              >
-                {/* Main character grid (田字格) */}
-                <div style={{ flexShrink: 0 }}>
-                  <div
-                    style={{
-                      position: 'relative',
-                      width: '160px',
-                      height: '160px',
-                      background: '#faf6ee',
-                      border: '2px solid #d4c5b0',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <TianZiGeBackground size={160} />
+              <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+                <div className="flex flex-col items-center shrink-0">
+                  <div className="relative h-40 w-40 rounded-lg border border-border bg-surface overflow-hidden">
+                    <TianZiGeBackground />
                     <div
-                      ref={el => {
+                      ref={(el) => {
                         if (el) {
-                          containerRefs.current[char] = { ...containerRefs.current[char], dynamic: el, static: containerRefs.current[char]?.static || null };
+                          containerRefs.current[char] = {
+                            ...containerRefs.current[char],
+                            dynamic: el,
+                            static: containerRefs.current[char]?.static ?? null,
+                          };
                         }
                       }}
-                      style={{ position: 'relative', zIndex: 1, width: '160px', height: '160px' }}
+                      className="relative z-10 h-40 w-40"
                     />
                   </div>
-                  {/* Character label */}
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      marginTop: '10px',
-                      fontFamily: "'Noto Serif SC', serif",
-                      fontSize: '13px',
-                      color: '#9c958b',
-                    }}
-                  >
-                    {char}
-                  </div>
+                  <div className="mt-2 text-xs font-mono text-subtle">{char}</div>
                 </div>
 
-                {/* Stroke progression */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontFamily: "'Cormorant Garamond', serif",
-                      fontSize: '12px',
-                      color: '#b0a99e',
-                      letterSpacing: '2px',
-                      textTransform: 'uppercase',
-                      marginBottom: '12px',
-                    }}
-                  >
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] font-mono tracking-[0.18em] uppercase text-muted mb-3">
                     Strokes
                   </div>
                   <div
-                    ref={el => {
+                    className="flex flex-wrap gap-2"
+                    ref={(el) => {
                       if (el && containerRefs.current[char]) {
                         containerRefs.current[char].static = el;
                       } else if (el) {
                         containerRefs.current[char] = { dynamic: null, static: el };
                       }
                     }}
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '8px',
-                    }}
                   />
+                  {errors[char] && (
+                    <div className="mt-3 text-sm text-danger">{errors[char]}</div>
+                  )}
                 </div>
               </div>
-
-              {errors[char] && (
-                <div
-                  style={{
-                    marginTop: '12px',
-                    fontFamily: "'Noto Serif SC', serif",
-                    fontSize: '13px',
-                    color: '#c84040',
-                    opacity: 0.8,
-                  }}
-                >
-                  {errors[char]}
-                </div>
-              )}
-            </div>
+            </article>
           ))}
         </div>
-
-        {/* Empty state */}
-        {chars.length === 0 && (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '60px 0',
-              animation: 'fadeIn 0.8s ease-out 0.3s both',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "'Noto Serif SC', serif",
-                fontSize: '64px',
-                color: '#ddd4c8',
-                marginBottom: '16px',
-                lineHeight: 1,
-              }}
-            >
-              永
-            </div>
-            <p
-              style={{
-                fontFamily: "'Noto Serif SC', serif",
-                fontSize: '14px',
-                color: '#b0a99e',
-                margin: 0,
-              }}
-            >
-              输入汉字，探索笔画之美
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
 };
+
+const TianZiGeBackground: React.FC = () => (
+  <svg
+    width="100%"
+    height="100%"
+    viewBox="0 0 160 160"
+    className="absolute inset-0 pointer-events-none text-border"
+    aria-hidden
+  >
+    <line x1="80" y1="0" x2="80" y2="160" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
+    <line x1="0" y1="80" x2="160" y2="80" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
+    <line x1="0" y1="0" x2="160" y2="160" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
+    <line x1="160" y1="0" x2="0" y2="160" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
+  </svg>
+);
 
 export default Hanzi;
