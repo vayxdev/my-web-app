@@ -10,6 +10,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.5.1",
     "hanzi-writer": "^3.7.0",
     "hanzi-writer-data": "^2.0.1",
     "html-to-image": "^1.11.13",
@@ -30,7 +31,9 @@
     "rehype-prism-plus": "^2.0.2",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
-    "remark-math": "^6.0.0"
+    "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

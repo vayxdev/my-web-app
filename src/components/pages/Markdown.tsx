@@ -8,7 +8,6 @@ import rehypeKatex from 'rehype-katex';
 import rehypePrismPlus from 'rehype-prism-plus';
 import { visit } from 'unist-util-visit';
 import { toPng } from 'html-to-image';
-import { jsPDF } from 'jspdf';
 import mermaid from 'mermaid';
 import pangu from 'pangu/browser';
 import {
@@ -110,23 +109,42 @@ const FONT_OPTIONS = [
 const formatMarkdown = (md: string): string => {
   const placeholders: string[] = [];
   const PH = (i: number) => `\u0000${i}\u0000`;
+  const push = (str: string): string => {
+    placeholders.push(str);
+    return PH(placeholders.length - 1);
+  };
+  const spaceInner = (txt: string): string => {
+    try {
+      return pangu.spacingText(txt);
+    } catch {
+      return txt;
+    }
+  };
 
   let s = md;
-  // Protect fenced code blocks first (greedy match of triple backticks pair)
-  s = s.replace(/```[\s\S]*?```/g, (m) => {
-    placeholders.push(m);
-    return PH(placeholders.length - 1);
-  });
+  // Protect fenced code blocks first
+  s = s.replace(/```[\s\S]*?```/g, (m) => push(m));
   // Then inline code (no newline inside)
-  s = s.replace(/`[^`\n]+`/g, (m) => {
-    placeholders.push(m);
-    return PH(placeholders.length - 1);
-  });
+  s = s.replace(/`[^`\n]+`/g, (m) => push(m));
 
-  // Pangu spacing on the rest
-  try {
-    s = pangu.spacingText(s);
-  } catch {}
+  // Protect strong (**, __) and strikethrough (~~) spans — keep markers
+  // visible to outer pangu so spaces are added around the span, not inside it.
+  s = s.replace(/(\*\*|__|~~)([^\n]+?)\1/g, (_, mark, content) =>
+    `${mark}${push(spaceInner(content))}${mark}`
+  );
+  // Protect italic *...* (skip line-start "* " bullets and lone markers)
+  s = s.replace(
+    /(^|[^\w*])\*(?=\S)([^*\n]+?)(?<=\S)\*(?!\w)/g,
+    (_, pre, content) => `${pre}*${push(spaceInner(content))}*`
+  );
+  // Protect italic _..._
+  s = s.replace(
+    /(^|[^\w_])_(?=\S)([^_\n]+?)(?<=\S)_(?!\w)/g,
+    (_, pre, content) => `${pre}_${push(spaceInner(content))}_`
+  );
+
+  // Pangu spacing on the remaining (outer) text
+  s = spaceInner(s);
 
   // Tidy whitespace
   s = s
@@ -134,8 +152,12 @@ const formatMarkdown = (md: string): string => {
     .replace(/[ \t]+$/gm, '')
     .replace(/\n{3,}/g, '\n\n');
 
-  // Restore code
-  s = s.replace(/\u0000(\d+)\u0000/g, (_, idx) => placeholders[Number(idx)]);
+  // Restore placeholders (iterative — protected spans may contain nested ones)
+  let prev = '';
+  while (prev !== s) {
+    prev = s;
+    s = s.replace(/\u0000(\d+)\u0000/g, (_, idx) => placeholders[Number(idx)]);
+  }
 
   // Single trailing newline
   s = s.replace(/\n*$/, '\n');
@@ -192,6 +214,8 @@ const Markdown: React.FC = () => {
           showLineNumbers: !!s.showLineNumbers,
           softBreaks: s.softBreaks !== false,
           autoSpacing: s.autoSpacing !== false,
+          pdfQuality: s.pdfQuality || 4,
+          pdfEngine: (s.pdfEngine === 'reactpdf' ? 'reactpdf' : 'browser') as 'browser' | 'reactpdf',
           markdown: s.markdown || defaultMarkdown,
         };
       } catch {}
@@ -206,6 +230,8 @@ const Markdown: React.FC = () => {
       showLineNumbers: false,
       softBreaks: true,
       autoSpacing: true,
+      pdfQuality: 4,
+      pdfEngine: 'browser' as 'browser' | 'reactpdf',
       markdown: defaultMarkdown,
     };
   };
@@ -221,6 +247,8 @@ const Markdown: React.FC = () => {
   const [showLineNumbers, setShowLineNumbers] = useState<boolean>(initial.showLineNumbers);
   const [softBreaks, setSoftBreaks] = useState<boolean>(initial.softBreaks);
   const [autoSpacing, setAutoSpacing] = useState<boolean>(initial.autoSpacing);
+  const [pdfQuality, setPdfQuality] = useState<number>(initial.pdfQuality);
+  const [pdfEngine, setPdfEngine] = useState<'browser' | 'reactpdf'>(initial.pdfEngine);
   const [justFormatted, setJustFormatted] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('theme');
@@ -276,11 +304,13 @@ const Markdown: React.FC = () => {
           showLineNumbers,
           softBreaks,
           autoSpacing,
+          pdfQuality,
+          pdfEngine,
           markdown,
         })
       );
     } catch {}
-  }, [selectedTheme, exportWidth, fontSize, lineHeight, fontFamily, padding, showLineNumbers, softBreaks, autoSpacing, markdown]);
+  }, [selectedTheme, exportWidth, fontSize, lineHeight, fontFamily, padding, showLineNumbers, softBreaks, autoSpacing, pdfQuality, pdfEngine, markdown]);
 
   useEffect(() => {
     if (!autoSpacing || !previewRef.current) return;
@@ -368,27 +398,43 @@ const Markdown: React.FC = () => {
     };
   }, [selectedTheme, fontSize, lineHeight]);
 
-  const capturePreview = async () => {
+  const capturePreview = async (pixelRatio = 2) => {
     if (!previewRef.current) return null;
-    const el = previewRef.current;
-    const scrollWidth = el.scrollWidth;
-    const clientWidth = el.offsetWidth;
-    const contentWidth = scrollWidth > clientWidth ? scrollWidth : exportWidth;
-    const finalWidth = Math.max(
-      exportWidth,
-      Math.min(contentWidth * (exportWidth / clientWidth), exportWidth * 1.5)
-    );
-    const dataUrl = await toPng(el, {
-      width: finalWidth,
-      height: el.scrollHeight * (finalWidth / el.offsetWidth),
-      style: {
-        transform: `scale(${finalWidth / el.offsetWidth})`,
-        transformOrigin: 'top left',
-      },
-      filter: (node) =>
-        !(node instanceof HTMLElement && node.classList.contains('md-no-export')),
-    });
-    return { dataUrl, width: finalWidth, height: el.scrollHeight * (finalWidth / el.offsetWidth) };
+    const original = previewRef.current;
+    // Clone the preview into an offscreen wrapper so the live preview never
+    // reflows during export. Positioning lives on the wrapper only — putting
+    // position/transform on the clone itself breaks html-to-image's
+    // foreignObject rendering (produces a blank image).
+    const clone = original.cloneNode(true) as HTMLDivElement;
+    clone.style.width = `${exportWidth}px`;
+    clone.style.maxWidth = `${exportWidth}px`;
+    clone.style.margin = '0';
+
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.top = '0';
+    wrapper.style.left = '100vw'; // just outside the right edge of the viewport
+    wrapper.style.pointerEvents = 'none';
+    wrapper.setAttribute('aria-hidden', 'true');
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    // Let the browser lay out the clone at the new width
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    try {
+      const w = clone.offsetWidth;
+      const h = clone.scrollHeight;
+      const dataUrl = await toPng(clone, {
+        width: w,
+        height: h,
+        pixelRatio,
+        filter: (node) =>
+          !(node instanceof HTMLElement && node.classList.contains('md-no-export')),
+      });
+      return { dataUrl, width: w * pixelRatio, height: h * pixelRatio };
+    } finally {
+      document.body.removeChild(wrapper);
+    }
   };
 
   const handleExportPng = async () => {
@@ -404,48 +450,53 @@ const Markdown: React.FC = () => {
     }
   };
 
+  const exportPdfViaBrowser = () => {
+    // Browser "Save as PDF" path: print only the preview via @media print.
+    // The browser produces a vector PDF (real text, tiny file, selectable).
+    const cleanup = () => {
+      document.body.classList.remove('printing-md');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    document.body.classList.add('printing-md');
+    requestAnimationFrame(() => {
+      try {
+        window.print();
+      } catch (error) {
+        console.error('Error opening print dialog:', error);
+        cleanup();
+      }
+    });
+  };
+
+  const exportPdfViaReact = async () => {
+    if (!previewRef.current) return;
+    // Lazy-load the renderer (and @react-pdf) so it isn't in the main bundle.
+    const { renderMarkdownToPdfBlob } = await import('../../services/markdownPdf');
+    const blob = await renderMarkdownToPdfBlob({
+      markdown,
+      previewEl: previewRef.current,
+      theme: selectedTheme,
+      fontSize,
+      lineHeight,
+      padding,
+      imagePixelRatio: pdfQuality,
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'markdown.pdf';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const handleExportPdf = async () => {
     try {
-      const result = await capturePreview();
-      if (!result) return;
-      const a4W = 210;
-      const a4H = 297;
-      const marginMm = 12;
-      const usableW = a4W - marginMm * 2;
-      const usableH = a4H - marginMm * 2;
-      const imgAspect = result.height / result.width;
-      const imgWMm = usableW;
-      const imgHMm = imgWMm * imgAspect;
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-      if (imgHMm <= usableH) {
-        pdf.addImage(result.dataUrl, 'PNG', marginMm, marginMm, imgWMm, imgHMm);
+      if (pdfEngine === 'reactpdf') {
+        await exportPdfViaReact();
       } else {
-        const pageContentH = usableH;
-        const pxPerMm = result.width / imgWMm;
-        const pageContentPx = pageContentH * pxPerMm;
-        const totalPages = Math.ceil(result.height / pageContentPx);
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d')!;
-        const img = new Image();
-        img.src = result.dataUrl;
-        await new Promise<void>((resolve) => {
-          img.onload = () => resolve();
-        });
-        for (let i = 0; i < totalPages; i++) {
-          if (i > 0) pdf.addPage();
-          const srcY = i * pageContentPx;
-          const srcH = Math.min(pageContentPx, result.height - srcY);
-          canvas.width = result.width;
-          canvas.height = srcH;
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, srcY, result.width, srcH, 0, 0, result.width, srcH);
-          const sliceUrl = canvas.toDataURL('image/png');
-          const sliceHMm = srcH / pxPerMm;
-          pdf.addImage(sliceUrl, 'PNG', marginMm, marginMm, imgWMm, sliceHMm);
-        }
+        exportPdfViaBrowser();
       }
-      pdf.save('markdown.pdf');
     } catch (error) {
       console.error('Error exporting PDF:', error);
     }
@@ -715,6 +766,32 @@ const Markdown: React.FC = () => {
                     <NumberInput value={padding} onChange={setPadding} min={20} max={80} step={5} />
                     <Unit>px</Unit>
                   </SettingRow>
+                  <SettingRow label="PDF 引擎">
+                    <select
+                      value={pdfEngine}
+                      onChange={(e) => setPdfEngine(e.target.value as 'browser' | 'reactpdf')}
+                      className="w-[140px] h-8 px-2 rounded-md border border-border bg-bg text-text text-xs focus:outline-none focus:border-accent"
+                    >
+                      <option value="browser">浏览器打印</option>
+                      <option value="reactpdf">@react-pdf</option>
+                    </select>
+                  </SettingRow>
+                  <p className="text-[11px] text-subtle leading-relaxed">
+                    浏览器打印（推荐）：弹打印对话框，选「另存为 PDF」。文字矢量、体积小，需勾选「背景图形」。
+                    <br />
+                    @react-pdf：一键导出无对话框、跨浏览器一致。中文从 CDN 拉 Noto Sans SC，首次导出会下载字体；数学公式与 Mermaid 嵌为图。
+                  </p>
+                  {pdfEngine === 'browser' ? null : (
+                    <>
+                      <SettingRow label="PDF 清晰度">
+                        <NumberInput value={pdfQuality} onChange={setPdfQuality} min={2} max={8} step={1} />
+                        <Unit>x</Unit>
+                      </SettingRow>
+                      <p className="text-[11px] text-subtle leading-relaxed">
+                        仅影响 @react-pdf 中数学公式与 Mermaid 嵌入图的清晰度。
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>

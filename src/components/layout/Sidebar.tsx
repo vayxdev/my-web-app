@@ -30,10 +30,10 @@ interface SidebarProps {
 }
 
 const TABS: TabItem[] = [
+  { label: '首页',     path: '/',         icon: Home },
   { label: 'Markdown', path: '/markdown', icon: FileImage },
-  { label: '首页',   path: '/',         icon: Home },
-  { label: '汉字',   path: '/hanzi',    icon: Languages },
-  { label: '拼音',   path: '/pinyin',   icon: Type },
+  { label: '汉字',     path: '/hanzi',    icon: Languages },
+  { label: '拼音',     path: '/pinyin',   icon: Type },
 ];
 
 const widthClass = (state: SidebarState) =>
