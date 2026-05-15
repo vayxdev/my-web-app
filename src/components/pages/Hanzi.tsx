@@ -79,10 +79,10 @@ const checkStorageAndEvict = () => {
 };
 
 const readCssVar = (name: string, fallback: string) => {
-  if (typeof window === 'undefined') return fallback;
+  if (typeof window === 'undefined') return `rgb(${fallback.split(/[\s,]+/).join(', ')})`;
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  if (!v) return fallback;
-  return `rgb(${v})`;
+  const triple = (v || fallback).split(/[\s,]+/).filter(Boolean).join(', ');
+  return `rgb(${triple})`;
 };
 
 const Hanzi: React.FC = () => {
